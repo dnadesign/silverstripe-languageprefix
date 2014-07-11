@@ -49,6 +49,33 @@ class PrefixModelAsController extends ModelAsController {
 
 				if($request->match($pattern, true)) {
 					$this->setRequest($request);
+
+					if(!$URLSegment = $request->param('URLSegment')) {
+						throw new Exception('ModelAsController->getNestedController(): was not passed a URLSegment value.');
+					}
+
+					// Find page by link, in default locale first
+					$sitetree = DataObject::get_one(
+						'SiteTree',
+						sprintf(
+							'"SiteTree"."URLSegment" = \'%s\' %s',
+							Convert::raw2sql(rawurlencode($URLSegment)),
+							(SiteTree::config()->nested_urls ? 'AND "SiteTree"."ParentID" = 0' : null)
+						)
+					);
+
+					// Find page by link, regardless of current locale settings
+					if($sitetree) {
+						// Enforce current locale setting to the loaded SiteTree object
+						if(class_exists('Translatable') && $sitetree->Locale) Translatable::set_current_locale($sitetree->Locale);
+
+						if(isset($_REQUEST['debug'])) {
+							Debug::message("Using record #$sitetree->ID of type $sitetree->class with link {$sitetree->Link()}");
+						}
+
+						return self::controller_for($sitetree, $this->request->param('Action'));
+					}
+					// try lod page independent of locale
 					return parent::getNestedController();
 				}
 

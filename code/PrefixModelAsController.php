@@ -34,7 +34,8 @@ class PrefixModelAsController extends ModelAsController {
 		// // Or it means that we are ignoring prefixes for this (default) locale
 		if (!$this->setLocale($prefix)) {
 
-			$this->Locale = Translatable::default_locale();
+			$this->locale = Translatable::default_locale();
+			Translatable::set_current_locale($this->locale);
 
 			if(Config::inst()->get('prefixconfig', 'ignore_default_locale')) {
 				$pattern = '$URLSegment//$Action/$ID/$OtherID';
